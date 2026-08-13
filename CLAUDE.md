@@ -18,6 +18,7 @@ A movie ticket booking platform. Admins manage movies, cinemas, rooms/seats, sho
 ## Shared Docs
 - @00-share-docs/API_SPEC.md
 - @00-share-docs/DATABASE.md
+- @WORKFLOW.md - Step-by-step workflow for building a feature end-to-end (FE + BE)
 
 ## Important
 - Follow existing patterns in codebase

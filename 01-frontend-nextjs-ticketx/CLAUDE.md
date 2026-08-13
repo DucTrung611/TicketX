@@ -13,6 +13,7 @@
 ### Must Read
 - @docs/PROJECT-RULES-FRONTEND.md - Conventions, patterns, MUST/MUST NOT
 - @docs/ARCHITECTURE-FRONTEND.md - Folder structure, components, state
+- @docs/SKILLS-FRONTEND.md - Which `.claude/skills` design skill to use for which kind of FE work
 
 ### Reference
 - @../00-share-docs/API_SPEC.md - API contract to consume
