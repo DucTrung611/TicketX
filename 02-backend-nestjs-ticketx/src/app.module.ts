@@ -1,5 +1,7 @@
+import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
@@ -8,6 +10,9 @@ import { DatabaseModule } from './core/database/database.module';
 import { RedisModule } from './core/cache/redis.module';
 import { LoggerModule } from './core/logger/logger.module';
 import { SharedModule } from './shared/shared.module';
+import { UserModule } from './features/user/user.module';
+import { AuthModule } from './features/auth/auth.module';
+import { MovieModule } from './features/movie/movie.module';
 
 @Module({
   imports: [
@@ -16,10 +21,17 @@ import { SharedModule } from './shared/shared.module';
       load: [configuration],
       validationSchema,
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+    }),
     LoggerModule,
     DatabaseModule,
     RedisModule,
     SharedModule,
+    UserModule,
+    AuthModule,
+    MovieModule,
   ],
   controllers: [AppController],
   providers: [AppService],
