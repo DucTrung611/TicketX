@@ -13,6 +13,9 @@ import { SharedModule } from './shared/shared.module';
 import { UserModule } from './features/user/user.module';
 import { AuthModule } from './features/auth/auth.module';
 import { MovieModule } from './features/movie/movie.module';
+import { CinemaModule } from './features/cinema/cinema.module';
+import { ShowtimeModule } from './features/showtime/showtime.module';
+import { BookingModule } from './features/booking/booking.module';
 
 @Module({
   imports: [
@@ -32,6 +35,9 @@ import { MovieModule } from './features/movie/movie.module';
     UserModule,
     AuthModule,
     MovieModule,
+    CinemaModule,
+    ShowtimeModule,
+    BookingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

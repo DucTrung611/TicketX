@@ -2,6 +2,7 @@ export interface AppConfig {
   app: {
     env: string;
     port: number;
+    corsOrigin: string;
   };
   database: {
     host: string;
@@ -21,12 +22,16 @@ export interface AppConfig {
     refreshSecret: string;
     refreshExpiresIn: string;
   };
+  booking: {
+    seatLockTtlSeconds: number;
+  };
 }
 
 export default (): AppConfig => ({
   app: {
     env: process.env.NODE_ENV ?? 'development',
     port: parseInt(process.env.PORT ?? '3000', 10),
+    corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
   },
   database: {
     host: process.env.DATABASE_HOST ?? 'localhost',
@@ -45,5 +50,11 @@ export default (): AppConfig => ({
     accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
     refreshSecret: process.env.JWT_REFRESH_SECRET ?? 'dev_refresh_secret',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+  },
+  booking: {
+    seatLockTtlSeconds: parseInt(
+      process.env.SEAT_LOCK_TTL_SECONDS ?? '600',
+      10,
+    ),
   },
 });

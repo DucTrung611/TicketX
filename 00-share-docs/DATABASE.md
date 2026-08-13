@@ -122,6 +122,7 @@ Indexes: `idx_showtimes_movie_id_start_time`, `idx_showtimes_room_id_start_time`
 | discount_amount | numeric(10,2) | default 0 |
 | total_amount | numeric(10,2) | |
 | expires_at | timestamptz | for pending auto-expiry |
+| checked_in_at | timestamptz | nullable; set by `POST /bookings/:id/checkin` (staff) |
 
 Indexes: `uq_bookings_booking_code`, `idx_bookings_user_id_created_at`
 
@@ -133,6 +134,7 @@ Indexes: `uq_bookings_booking_code`, `idx_bookings_user_id_created_at`
 | showtime_id | uuid | denormalized, needed for unique index below |
 | seat_id | uuid | FK → seats |
 | price | numeric(10,2) | snapshot |
+| status | enum(`pending`,`confirmed`,`cancelled`,`expired`) | mirrors the owning booking's status; denormalized so the partial index below can filter on it |
 
 Indexes: `uq_booking_seats_showtime_id_seat_id` (partial, `WHERE status IN ('pending','confirmed')`) — DB-level double-booking guard, backs up the Redis lock (see §3).
 
