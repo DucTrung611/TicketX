@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { toAssetUrl } from '@/shared/utils/assets';
 import type { Movie } from '../types/movie.types';
 
@@ -16,7 +17,9 @@ export function MovieCard({ movie }: MovieCardProps) {
   const posterUrl = toAssetUrl(movie.posterUrl);
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+    <Link
+      href={`/movies/${movie.id}`}
+      className="flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
       <div className="relative aspect-[2/3] w-full bg-zinc-100 dark:bg-zinc-800">
         {posterUrl ? (
           <Image
@@ -51,6 +54,6 @@ export function MovieCard({ movie }: MovieCardProps) {
           </p>
         )}
       </div>
-    </article>
+    </Link>
   );
 }

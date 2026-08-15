@@ -26,3 +26,31 @@ export interface MovieListParams {
   page?: number;
   limit?: number;
 }
+
+export interface Review {
+  id: string;
+  movieId: string;
+  userId: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+export interface CreateReviewPayload {
+  rating: number;
+  comment?: string;
+}
+
+export interface CreateMoviePayload {
+  title: string;
+  slug?: string;
+  description?: string;
+  durationMinutes?: number;
+  releaseDate?: string;
+  ageRating?: AgeRating;
+  trailerUrl?: string;
+  status: MovieStatus;
+  genreIds?: string[];
+}
+
+export type UpdateMoviePayload = Partial<CreateMoviePayload>;
