@@ -22,9 +22,49 @@ export function NavBar() {
         >
           Phim
         </Link>
+        <Link
+          href={ROUTES.cinemas}
+          className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+        >
+          Rạp chiếu
+        </Link>
+        <Link
+          href={ROUTES.showtimes}
+          className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+        >
+          Lịch chiếu
+        </Link>
 
         {user ? (
           <div className="flex items-center gap-3">
+            <Link
+              href={ROUTES.myBookings}
+              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            >
+              Vé của tôi
+            </Link>
+            <Link
+              href={ROUTES.profile}
+              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            >
+              Hồ sơ
+            </Link>
+            {(user.role === 'staff' || user.role === 'admin') && (
+              <Link
+                href={ROUTES.checkin}
+                className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+              >
+                Check-in
+              </Link>
+            )}
+            {user.role === 'admin' && (
+              <Link
+                href={ROUTES.admin}
+                className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+              >
+                Quản trị
+              </Link>
+            )}
             <span className="text-zinc-600 dark:text-zinc-400">
               Xin chào, {user.fullName}
               {user.role !== 'customer' && (

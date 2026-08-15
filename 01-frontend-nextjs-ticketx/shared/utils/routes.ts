@@ -3,4 +3,18 @@ export const ROUTES = {
   movies: '/movies',
   login: '/login',
   register: '/register',
+  myBookings: '/my-bookings',
+  cinemas: '/cinemas',
+  showtimes: '/showtimes',
+  profile: '/profile',
+  checkin: '/checkin',
+  ticket: (bookingId: string) => `/tickets/${bookingId}`,
+  admin: '/admin',
+  adminMovies: '/admin/movies',
+  adminCinemas: '/admin/cinemas',
+  adminCinemaSeats: (cinemaId: string, roomId: string) =>
+    `/admin/cinemas/${cinemaId}/rooms/${roomId}/seats`,
+  adminShowtimes: '/admin/showtimes',
+  adminCombos: '/admin/combos',
+  adminVouchers: '/admin/vouchers',
 } as const;

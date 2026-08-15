@@ -1,6 +1,8 @@
 import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -16,6 +18,9 @@ import { MovieModule } from './features/movie/movie.module';
 import { CinemaModule } from './features/cinema/cinema.module';
 import { ShowtimeModule } from './features/showtime/showtime.module';
 import { BookingModule } from './features/booking/booking.module';
+import { PaymentModule } from './features/payment/payment.module';
+import { ComboModule } from './features/combo/combo.module';
+import { VoucherModule } from './features/voucher/voucher.module';
 
 @Module({
   imports: [
@@ -28,6 +33,8 @@ import { BookingModule } from './features/booking/booking.module';
       rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
     }),
+    EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     LoggerModule,
     DatabaseModule,
     RedisModule,
@@ -38,6 +45,9 @@ import { BookingModule } from './features/booking/booking.module';
     CinemaModule,
     ShowtimeModule,
     BookingModule,
+    PaymentModule,
+    ComboModule,
+    VoucherModule,
   ],
   controllers: [AppController],
   providers: [AppService],
