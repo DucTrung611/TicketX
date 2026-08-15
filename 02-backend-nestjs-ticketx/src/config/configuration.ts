@@ -3,6 +3,7 @@ export interface AppConfig {
     env: string;
     port: number;
     corsOrigin: string;
+    baseUrl: string;
   };
   database: {
     host: string;
@@ -25,6 +26,9 @@ export interface AppConfig {
   booking: {
     seatLockTtlSeconds: number;
   };
+  payment: {
+    webhookSecret: string;
+  };
 }
 
 export default (): AppConfig => ({
@@ -32,6 +36,9 @@ export default (): AppConfig => ({
     env: process.env.NODE_ENV ?? 'development',
     port: parseInt(process.env.PORT ?? '3000', 10),
     corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
+    baseUrl:
+      process.env.APP_BASE_URL ??
+      `http://localhost:${process.env.PORT ?? '3000'}`,
   },
   database: {
     host: process.env.DATABASE_HOST ?? 'localhost',
@@ -56,5 +63,8 @@ export default (): AppConfig => ({
       process.env.SEAT_LOCK_TTL_SECONDS ?? '600',
       10,
     ),
+  },
+  payment: {
+    webhookSecret: process.env.PAYMENT_WEBHOOK_SECRET ?? 'dev_webhook_secret',
   },
 });

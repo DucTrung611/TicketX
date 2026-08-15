@@ -6,6 +6,7 @@ export const validationSchema = Joi.object({
     .default('development'),
   PORT: Joi.number().default(3000),
   CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
+  APP_BASE_URL: Joi.string().optional(),
 
   DATABASE_HOST: Joi.string().required(),
   DATABASE_PORT: Joi.number().default(5432),
@@ -23,4 +24,6 @@ export const validationSchema = Joi.object({
   JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
 
   SEAT_LOCK_TTL_SECONDS: Joi.number().default(600),
+
+  PAYMENT_WEBHOOK_SECRET: Joi.string().default('dev_webhook_secret'),
 });
