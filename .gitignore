@@ -46,6 +46,9 @@ lerna-debug.log*
 .temp
 .tmp
 
+# Playwright MCP test artifacts
+.playwright-mcp/
+
 # Runtime data
 pids
 *.pid
