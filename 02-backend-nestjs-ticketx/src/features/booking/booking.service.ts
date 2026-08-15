@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { QueryFailedError } from 'typeorm';
 import { AppConfig } from '../../config/configuration';
 import { PaginatedResult } from '../../shared/types/paginated-result.type';
@@ -12,11 +13,16 @@ import { buildPaginationMeta } from '../../shared/utils/pagination.util';
 import { PaginationQueryDto } from '../../shared/dto/pagination-query.dto';
 import { ShowtimeService } from '../showtime/showtime.service';
 import { CinemaService } from '../cinema/cinema.service';
+import { ComboService } from '../combo/combo.service';
+import { VoucherService } from '../voucher/voucher.service';
 import { SeatLockService } from './seat-lock.service';
 import { BookingRepository } from './booking.repository';
+import type { CreateBookingComboInput } from './booking.repository';
 import { BookingSeatRepository } from './booking-seat.repository';
+import { BookingComboRepository } from './booking-combo.repository';
 import { BookingGateway } from './booking.gateway';
 import { Booking } from './entities/booking.entity';
+import { BookingCombo } from './entities/booking-combo.entity';
 import { HoldSeatsDto } from './dto/hold-seats.dto';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { HoldResponseDto } from './dto/hold-response.dto';
@@ -32,10 +38,14 @@ export class BookingService {
   constructor(
     private readonly bookingRepository: BookingRepository,
     private readonly bookingSeatRepository: BookingSeatRepository,
+    private readonly bookingComboRepository: BookingComboRepository,
     private readonly seatLockService: SeatLockService,
     private readonly showtimeService: ShowtimeService,
     private readonly cinemaService: CinemaService,
+    private readonly comboService: ComboService,
+    private readonly voucherService: VoucherService,
     private readonly bookingGateway: BookingGateway,
+    private readonly eventEmitter: EventEmitter2,
     configService: ConfigService<AppConfig>,
   ) {
     this.seatLockTtlSeconds = configService.get('booking', {
@@ -100,7 +110,36 @@ export class BookingService {
     }
 
     const pricePerSeat = showtime.basePrice;
-    const totalAmount = (Number(pricePerSeat) * dto.seatIds.length).toFixed(2);
+    const seatsSubtotal = Number(pricePerSeat) * dto.seatIds.length;
+
+    const comboInputs: CreateBookingComboInput[] = [];
+    let combosSubtotal = 0;
+    if (dto.comboItems && dto.comboItems.length > 0) {
+      for (const item of dto.comboItems) {
+        const combo = await this.comboService.getActiveByIdOrThrow(
+          item.comboId,
+        );
+        combosSubtotal += combo.price * item.quantity;
+        comboInputs.push({
+          comboId: item.comboId,
+          quantity: item.quantity,
+          price: combo.price.toFixed(2),
+        });
+      }
+    }
+
+    const subtotal = seatsSubtotal + combosSubtotal;
+
+    let discountAmount = 0;
+    if (dto.voucherCode) {
+      const validation = await this.voucherService.validateForOrder(
+        dto.voucherCode,
+        subtotal,
+      );
+      discountAmount = validation.discountAmount;
+    }
+
+    const totalAmount = (subtotal - discountAmount).toFixed(2);
     const expiresAt = new Date(Date.now() + this.seatLockTtlSeconds * 1000);
 
     let booking: Booking | undefined;
@@ -112,11 +151,13 @@ export class BookingService {
             showtimeId: dto.showtimeId,
             bookingCode: this.generateBookingCode(),
             status: 'pending',
-            discountAmount: '0.00',
+            voucherCode: dto.voucherCode ?? null,
+            discountAmount: discountAmount.toFixed(2),
             totalAmount,
             expiresAt,
           },
           dto.seatIds.map((seatId) => ({ seatId, price: pricePerSeat })),
+          comboInputs,
         );
       } catch (error) {
         const constraint = this.constraintNameOf(error);
@@ -140,7 +181,11 @@ export class BookingService {
       });
     }
 
-    return this.toResponseDto(booking, dto.seatIds);
+    if (dto.voucherCode) {
+      await this.voucherService.incrementUsage(dto.voucherCode);
+    }
+
+    return this.toResponseDto(booking, dto.seatIds, comboInputs);
   }
 
   async list(
@@ -155,12 +200,14 @@ export class BookingService {
 
     const items = await Promise.all(
       bookings.map(async (booking) => {
-        const seats = await this.bookingSeatRepository.findByBookingId(
-          booking.id,
-        );
+        const [seats, combos] = await Promise.all([
+          this.bookingSeatRepository.findByBookingId(booking.id),
+          this.bookingComboRepository.findByBookingId(booking.id),
+        ]);
         return this.toResponseDto(
           booking,
           seats.map((seat) => seat.seatId),
+          combos,
         );
       }),
     );
@@ -173,10 +220,14 @@ export class BookingService {
     id: string,
   ): Promise<BookingResponseDto> {
     const booking = await this.getOwnedBookingOrThrow(userId, id);
-    const seats = await this.bookingSeatRepository.findByBookingId(booking.id);
+    const [seats, combos] = await Promise.all([
+      this.bookingSeatRepository.findByBookingId(booking.id),
+      this.bookingComboRepository.findByBookingId(booking.id),
+    ]);
     return this.toResponseDto(
       booking,
       seats.map((seat) => seat.seatId),
+      combos,
     );
   }
 
@@ -203,6 +254,50 @@ export class BookingService {
     for (const seatId of seatIds) {
       this.bookingGateway.emitSeatReleased(booking.showtimeId, seatId);
     }
+  }
+
+  /**
+   * Transitions a `pending` booking to `confirmed` after a successful payment.
+   * Called by `features/payment`'s webhook handler — idempotent, since gateways
+   * may retry webhook delivery.
+   */
+  async confirmBooking(bookingId: string): Promise<void> {
+    const booking = await this.bookingRepository.findById(bookingId);
+    if (!booking) {
+      throw new NotFoundException({
+        code: 'BOOKING_004',
+        message: 'Booking not found',
+      });
+    }
+    if (booking.status === 'confirmed') {
+      return;
+    }
+    if (booking.status !== 'pending') {
+      throw new ConflictException({
+        code: 'BOOKING_005',
+        message: 'Booking cannot be confirmed in its current state',
+      });
+    }
+
+    booking.status = 'confirmed';
+    await this.bookingRepository.save(booking);
+    await this.bookingSeatRepository.updateStatusByBookingId(
+      booking.id,
+      'confirmed',
+    );
+
+    const seats = await this.bookingSeatRepository.findByBookingId(booking.id);
+    const seatIds = seats.map((seat) => seat.seatId);
+    await this.seatLockService.releaseMany(booking.showtimeId, seatIds);
+    for (const seatId of seatIds) {
+      this.bookingGateway.emitSeatBooked(booking.showtimeId, seatId);
+    }
+
+    this.eventEmitter.emit('booking.confirmed', {
+      bookingId: booking.id,
+      userId: booking.userId,
+      showtimeId: booking.showtimeId,
+    });
   }
 
   async getTicket(userId: string, id: string): Promise<TicketResponseDto> {
@@ -244,10 +339,14 @@ export class BookingService {
     booking.checkedInAt = new Date();
     await this.bookingRepository.save(booking);
 
-    const seats = await this.bookingSeatRepository.findByBookingId(booking.id);
+    const [seats, combos] = await Promise.all([
+      this.bookingSeatRepository.findByBookingId(booking.id),
+      this.bookingComboRepository.findByBookingId(booking.id),
+    ]);
     return this.toResponseDto(
       booking,
       seats.map((seat) => seat.seatId),
+      combos,
     );
   }
 
@@ -305,6 +404,7 @@ export class BookingService {
   private toResponseDto(
     booking: Booking,
     seatIds: string[],
+    combos: (BookingCombo | CreateBookingComboInput)[] = [],
   ): BookingResponseDto {
     return {
       id: booking.id,
@@ -312,6 +412,11 @@ export class BookingService {
       status: booking.status,
       showtimeId: booking.showtimeId,
       seatIds,
+      comboItems: combos.map((combo) => ({
+        comboId: combo.comboId,
+        quantity: combo.quantity,
+        price: Number(combo.price),
+      })),
       discountAmount: Number(booking.discountAmount),
       totalAmount: Number(booking.totalAmount),
       expiresAt: booking.expiresAt,

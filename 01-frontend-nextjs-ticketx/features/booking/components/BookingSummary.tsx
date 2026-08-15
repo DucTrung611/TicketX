@@ -1,0 +1,181 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useBookingStore } from '../stores/booking.store';
+import { useSeatHold } from '../hooks/useSeatHold';
+import { useCreateBooking } from '../hooks/useCreateBooking';
+import { ApiError } from '@/shared/types/api-response.type';
+import type { ShowtimeSeat } from '@/features/showtime';
+import { ComboPicker, useCombos } from '@/features/combo';
+import { VoucherInput } from '@/features/voucher';
+
+interface BookingSummaryProps {
+  showtimeId: string;
+  seats: ShowtimeSeat[];
+}
+
+function useCountdown(expiresAt: string | null): number {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!expiresAt) return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  if (!expiresAt) return 0;
+  return Math.max(0, new Date(expiresAt).getTime() - now);
+}
+
+function formatCountdown(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+export function BookingSummary({ showtimeId, seats }: BookingSummaryProps) {
+  const router = useRouter();
+  const selectedSeatIds = useBookingStore((state) => state.selectedSeatIds);
+  const holdExpiresAt = useBookingStore((state) => state.holdExpiresAt);
+  const selectedCombos = useBookingStore((state) => state.selectedCombos);
+  const voucherCode = useBookingStore((state) => state.voucherCode);
+  const discountAmount = useBookingStore((state) => state.discountAmount);
+  const setComboQuantity = useBookingStore((state) => state.setComboQuantity);
+  const applyVoucher = useBookingStore((state) => state.applyVoucher);
+  const clearVoucher = useBookingStore((state) => state.clearVoucher);
+
+  const holdMutation = useSeatHold();
+  const createMutation = useCreateBooking();
+  const { data: combos } = useCombos();
+
+  const selectedSeats = seats.filter((seat) => selectedSeatIds.includes(seat.id));
+  const seatsTotal = useMemo(
+    () => selectedSeats.reduce((sum, seat) => sum + seat.price, 0),
+    [selectedSeats],
+  );
+
+  const combosTotal = useMemo(() => {
+    if (!combos) return 0;
+    return selectedCombos.reduce((sum, item) => {
+      const combo = combos.find((c) => c.id === item.comboId);
+      return combo ? sum + combo.price * item.quantity : sum;
+    }, 0);
+  }, [combos, selectedCombos]);
+
+  const subtotal = seatsTotal + combosTotal;
+  const totalPrice = Math.max(0, subtotal - discountAmount);
+
+  const remainingMs = useCountdown(holdExpiresAt);
+  const isHoldActive = Boolean(holdExpiresAt) && remainingMs > 0;
+
+  const errorMessage = (mutationError: unknown) =>
+    mutationError instanceof ApiError
+      ? mutationError.message
+      : mutationError
+        ? 'Đã có lỗi xảy ra, vui lòng thử lại'
+        : null;
+
+  const handleHold = () => {
+    holdMutation.mutate({ showtimeId, seatIds: selectedSeatIds });
+  };
+
+  const handleCreateBooking = () => {
+    const comboItems = selectedCombos.filter((item) => item.quantity > 0);
+    createMutation.mutate(
+      {
+        showtimeId,
+        seatIds: selectedSeatIds,
+        ...(comboItems.length > 0 ? { comboItems } : {}),
+        ...(voucherCode ? { voucherCode } : {}),
+      },
+      {
+        onSuccess: (booking) => router.push(`/checkout/${booking.id}`),
+      },
+    );
+  };
+
+  return (
+    <aside className="flex w-full max-w-xs flex-col gap-4 rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+      <h3 className="text-sm font-semibold text-zinc-100">Ghế đã chọn</h3>
+
+      {selectedSeats.length === 0 ? (
+        <p className="text-sm text-zinc-500">Chưa chọn ghế nào.</p>
+      ) : (
+        <ul className="flex flex-wrap gap-1.5 text-sm text-zinc-300">
+          {selectedSeats.map((seat) => (
+            <li
+              key={seat.id}
+              className="rounded border border-amber-400/50 px-2 py-0.5"
+            >
+              {seat.seatRow}
+              {seat.seatNumber}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <ComboPicker selectedCombos={selectedCombos} onQuantityChange={setComboQuantity} />
+
+      <VoucherInput
+        orderAmount={subtotal}
+        appliedCode={voucherCode}
+        discountAmount={discountAmount}
+        onApplied={applyVoucher}
+        onClear={clearVoucher}
+      />
+
+      <div className="flex flex-col gap-1 border-t border-zinc-800 pt-3 text-sm">
+        <div className="flex items-center justify-between text-zinc-400">
+          <span>Tạm tính</span>
+          <span>{subtotal.toLocaleString('vi-VN')} VND</span>
+        </div>
+        {discountAmount > 0 && (
+          <div className="flex items-center justify-between text-emerald-400">
+            <span>Giảm giá</span>
+            <span>-{discountAmount.toLocaleString('vi-VN')} VND</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <span className="text-zinc-400">Tổng tiền</span>
+          <span className="font-semibold text-zinc-50">
+            {totalPrice.toLocaleString('vi-VN')} VND
+          </span>
+        </div>
+      </div>
+
+      {isHoldActive && (
+        <p className="text-center text-xs text-amber-400">
+          Giữ ghế còn {formatCountdown(remainingMs)}
+        </p>
+      )}
+
+      {!isHoldActive ? (
+        <button
+          type="button"
+          disabled={selectedSeats.length === 0 || holdMutation.isPending}
+          onClick={handleHold}
+          className="rounded-full bg-amber-400 px-4 py-2.5 text-sm font-semibold text-zinc-900 transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {holdMutation.isPending ? 'Đang giữ ghế…' : 'Giữ ghế'}
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled={createMutation.isPending}
+          onClick={handleCreateBooking}
+          className="rounded-full bg-amber-400 px-4 py-2.5 text-sm font-semibold text-zinc-900 transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {createMutation.isPending ? 'Đang đặt vé…' : 'Đặt vé'}
+        </button>
+      )}
+
+      {(errorMessage(holdMutation.error) || errorMessage(createMutation.error)) && (
+        <p className="text-center text-xs text-red-400">
+          {errorMessage(holdMutation.error) ?? errorMessage(createMutation.error)}
+        </p>
+      )}
+    </aside>
+  );
+}

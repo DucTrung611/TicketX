@@ -13,11 +13,17 @@ Owns `bookings`, `booking_seats` (see `DATABASE.md` §2 "Feature: Booking"). The
   then acquires a Redis lock per seat. All-or-nothing: if any seat is already locked by
   someone else, the seats acquired earlier in the same call are rolled back
 - `POST /bookings`: requires every seat to still be Redis-locked by the caller, then inserts
-  `booking` + `booking_seats` in one transaction (`BookingRepository.createWithSeats`).
-  `uq_booking_seats_showtime_id_seat_id` (partial, `WHERE status IN ('pending','confirmed')`)
-  is the DB-level guard backing up the Redis lock — a `23505` on that constraint means another
-  request won the race and is mapped to `BOOKING_002`; a collision on `uq_bookings_booking_code`
-  (random `TX-{year}-{6 digits}`) just retries with a new code (up to 3 attempts)
+  `booking` + `booking_seats` (+ `booking_combos`, if `comboItems` given) in one transaction
+  (`BookingRepository.createWithSeats`). `uq_booking_seats_showtime_id_seat_id` (partial,
+  `WHERE status IN ('pending','confirmed')`) is the DB-level guard backing up the Redis lock —
+  a `23505` on that constraint means another request won the race and is mapped to
+  `BOOKING_002`; a collision on `uq_bookings_booking_code` (random `TX-{year}-{6 digits}`) just
+  retries with a new code (up to 3 attempts). `comboItems` are validated one-by-one via
+  `ComboService.getActiveByIdOrThrow` (throws `COMBO_001` if missing/inactive) and summed into
+  the subtotal; `voucherCode`, if given, is validated against that subtotal via
+  `VoucherService.validateForOrder` (throws `VOUCHER_001` if invalid) and `used_count` is
+  incremented only after the booking row is actually persisted. `total_amount = seats subtotal
+  + combos subtotal - discount_amount`.
 - `POST /bookings/:id/cancel`: owner-only, sets `booking`/`booking_seats` status to
   `cancelled` (frees the partial unique index) and releases the Redis locks
 - `GET /bookings/:id/ticket`: only for `confirmed` bookings — returns a QR **payload** string
@@ -35,9 +41,6 @@ Owns `bookings`, `booking_seats` (see `DATABASE.md` §2 "Feature: Booking"). The
   job once `features/payment` exists (see `API_SPEC.md` §7)
 - **Expiry**: `bookings.expires_at` is set on creation but nothing sweeps expired `pending`
   bookings to `expired` — needs a scheduled job once introduced
-- **Combo / Voucher**: `POST /bookings` intentionally only accepts `{ showtimeId, seatIds }`
-  (no `comboItems`/`voucherCode`) since `features/combo` and `features/voucher` don't exist
-  yet; `discount_amount` is always `0`. Extend `CreateBookingDto` when those features land.
 - `GET /showtimes/:id/seats` (owned by `features/showtime`) still reports every seat as
   `available` — it doesn't yet merge in Redis locks or `booking_seats`. That merge is this
   feature's responsibility once combo/voucher/payment stabilize the write path.

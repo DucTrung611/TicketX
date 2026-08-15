@@ -21,4 +21,17 @@ export class BookingSeatRepository {
   ): Promise<void> {
     await this.repo.update({ bookingId }, { status });
   }
+
+  async updateStatusByBookingIds(
+    bookingIds: string[],
+    status: BookingStatus,
+  ): Promise<void> {
+    if (bookingIds.length === 0) return;
+    await this.repo
+      .createQueryBuilder()
+      .update(BookingSeat)
+      .set({ status })
+      .where('booking_id IN (:...bookingIds)', { bookingIds })
+      .execute();
+  }
 }

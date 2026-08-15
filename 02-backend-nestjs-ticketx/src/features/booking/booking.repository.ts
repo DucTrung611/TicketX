@@ -3,9 +3,17 @@ import { DataSource, Repository } from 'typeorm';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Booking } from './entities/booking.entity';
 import { BookingSeat } from './entities/booking-seat.entity';
+import { BookingCombo } from './entities/booking-combo.entity';
+import type { BookingStatus } from './types/booking.types';
 
 export interface CreateBookingSeatInput {
   seatId: string;
+  price: string;
+}
+
+export interface CreateBookingComboInput {
+  comboId: string;
+  quantity: number;
   price: string;
 }
 
@@ -47,6 +55,7 @@ export class BookingRepository {
   async createWithSeats(
     bookingData: Partial<Booking>,
     seats: CreateBookingSeatInput[],
+    combos: CreateBookingComboInput[] = [],
   ): Promise<Booking> {
     return this.dataSource.transaction(async (manager) => {
       const booking = manager.create(Booking, bookingData);
@@ -63,11 +72,47 @@ export class BookingRepository {
       );
       await manager.save(bookingSeats);
 
+      if (combos.length > 0) {
+        const bookingCombos = combos.map((combo) =>
+          manager.create(BookingCombo, {
+            bookingId: booking.id,
+            comboId: combo.comboId,
+            quantity: combo.quantity,
+            price: combo.price,
+          }),
+        );
+        await manager.save(bookingCombos);
+      }
+
       return booking;
     });
   }
 
   save(booking: Booking): Promise<Booking> {
     return this.repo.save(booking);
+  }
+
+  /**
+   * Finds `pending` bookings whose hold has lapsed. Used by the expiry sweep —
+   * without this, a lapsed `pending` row keeps blocking its seat forever via
+   * `uq_booking_seats_showtime_id_seat_id`, since that index only excludes
+   * `cancelled`/`expired` rows, not merely-late ones.
+   */
+  findExpiredPending(now: Date): Promise<Booking[]> {
+    return this.repo
+      .createQueryBuilder('booking')
+      .where('booking.status = :status', { status: 'pending' })
+      .andWhere('booking.expires_at < :now', { now })
+      .getMany();
+  }
+
+  async updateStatusByIds(ids: string[], status: BookingStatus): Promise<void> {
+    if (ids.length === 0) return;
+    await this.repo
+      .createQueryBuilder()
+      .update(Booking)
+      .set({ status })
+      .where('id IN (:...ids)', { ids })
+      .execute();
   }
 }
