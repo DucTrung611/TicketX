@@ -1,8 +1,12 @@
 export { LoginForm } from './components/LoginForm';
 export { RegisterForm } from './components/RegisterForm';
+export { ProfileForm } from './components/ProfileForm';
+export { PasswordForm } from './components/PasswordForm';
 export { useCurrentUser } from './hooks/useCurrentUser';
 export { useLogin } from './hooks/useLogin';
 export { useLogout } from './hooks/useLogout';
 export { useRegister } from './hooks/useRegister';
 export { useAuthBootstrap } from './hooks/useAuthBootstrap';
+export { useUpdateProfile } from './hooks/useUpdateProfile';
+export { useChangePassword } from './hooks/useChangePassword';
 export type { User, UserRole, AuthResponse } from './types/user.types';

@@ -17,9 +17,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-let refreshPromise: Promise<string> | null = null;
-
-async function refreshAccessToken(): Promise<string> {
+async function doRefreshAccessToken(): Promise<string> {
   const { refreshToken, user } = useAuthStore.getState();
   if (!refreshToken || !user) {
     throw new ApiError('AUTH_003', 'Not authenticated');
@@ -42,6 +40,25 @@ async function refreshAccessToken(): Promise<string> {
   return body.data.accessToken;
 }
 
+let refreshPromise: Promise<string> | null = null;
+
+/**
+ * Single-flight guard around `POST /auth/refresh`: the refresh token rotates
+ * on every use, so two concurrent callers (e.g. a React Strict Mode double
+ * effect, or a 401-retry racing the bootstrap check) must share one in-flight
+ * request — otherwise the loser presents an already-rotated token and gets a
+ * 401 that wipes the session the winner just established. The guard lives
+ * inside this exported function (not just around one call site) so every
+ * caller — the response interceptor below and `useAuthBootstrap` — shares the
+ * same in-flight promise.
+ */
+export function refreshAccessToken(): Promise<string> {
+  refreshPromise ??= doRefreshAccessToken().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
+}
+
 interface RetriableConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
@@ -61,10 +78,7 @@ apiClient.interceptors.response.use(
     if (isExpiredAccessToken && original && !original._retry) {
       original._retry = true;
       try {
-        refreshPromise ??= refreshAccessToken().finally(() => {
-          refreshPromise = null;
-        });
-        const newAccessToken = await refreshPromise;
+        const newAccessToken = await refreshAccessToken();
         original.headers.set('Authorization', `Bearer ${newAccessToken}`);
         return apiClient.request(original);
       } catch (refreshError) {
