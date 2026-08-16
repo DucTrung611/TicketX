@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -22,7 +22,7 @@ import { AppConfig } from '../../config/configuration';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Booking, BookingSeat, BookingCombo]),
-    ShowtimeModule,
+    forwardRef(() => ShowtimeModule),
     CinemaModule,
     ComboModule,
     VoucherModule,

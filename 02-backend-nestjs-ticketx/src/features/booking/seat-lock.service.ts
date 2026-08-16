@@ -35,6 +35,17 @@ export class SeatLockService {
     return this.redis.get(this.key(showtimeId, seatId));
   }
 
+  /** Bulk lock check for a seat map — which of `seatIds` currently have a hold. */
+  async getLockedSeatIds(
+    showtimeId: string,
+    seatIds: string[],
+  ): Promise<Set<string>> {
+    if (seatIds.length === 0) return new Set();
+    const keys = seatIds.map((seatId) => this.key(showtimeId, seatId));
+    const owners = await this.redis.mget(...keys);
+    return new Set(seatIds.filter((_, index) => owners[index] !== null));
+  }
+
   async isOwnedBy(
     showtimeId: string,
     seatId: string,

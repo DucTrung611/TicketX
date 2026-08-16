@@ -15,6 +15,22 @@ export class BookingSeatRepository {
     return this.repo.find({ where: { bookingId } });
   }
 
+  /**
+   * Seats already claimed for a showtime — mirrors the `pending`/`confirmed`
+   * scope of `uq_booking_seats_showtime_id_seat_id`, so this stays in sync
+   * with what the DB actually blocks a second booking on.
+   */
+  async findTakenSeatIds(showtimeId: string): Promise<string[]> {
+    const rows = await this.repo.find({
+      where: [
+        { showtimeId, status: 'pending' },
+        { showtimeId, status: 'confirmed' },
+      ],
+      select: ['seatId'],
+    });
+    return rows.map((row) => row.seatId);
+  }
+
   async updateStatusByBookingId(
     bookingId: string,
     status: BookingStatus,

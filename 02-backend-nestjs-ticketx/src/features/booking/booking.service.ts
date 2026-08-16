@@ -1,6 +1,8 @@
 import { randomInt } from 'crypto';
 import {
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -40,6 +42,7 @@ export class BookingService {
     private readonly bookingSeatRepository: BookingSeatRepository,
     private readonly bookingComboRepository: BookingComboRepository,
     private readonly seatLockService: SeatLockService,
+    @Inject(forwardRef(() => ShowtimeService))
     private readonly showtimeService: ShowtimeService,
     private readonly cinemaService: CinemaService,
     private readonly comboService: ComboService,
@@ -51,6 +54,19 @@ export class BookingService {
     this.seatLockTtlSeconds = configService.get('booking', {
       infer: true,
     })!.seatLockTtlSeconds;
+  }
+
+  /** Seats already claimed (pending/confirmed) for a showtime — used by the showtime feature's live seat map. */
+  getTakenSeatIds(showtimeId: string): Promise<string[]> {
+    return this.bookingSeatRepository.findTakenSeatIds(showtimeId);
+  }
+
+  /** Seats currently Redis-held for a showtime — used by the showtime feature's live seat map. */
+  getLockedSeatIds(
+    showtimeId: string,
+    seatIds: string[],
+  ): Promise<Set<string>> {
+    return this.seatLockService.getLockedSeatIds(showtimeId, seatIds);
   }
 
   async hold(userId: string, dto: HoldSeatsDto): Promise<HoldResponseDto> {

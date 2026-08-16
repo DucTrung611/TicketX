@@ -1,11 +1,14 @@
 import {
   BadRequestException,
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { MovieService } from '../movie/movie.service';
 import { CinemaService } from '../cinema/cinema.service';
+import { BookingService } from '../booking/booking.service';
 import { PaginatedResult } from '../../shared/types/paginated-result.type';
 import { buildPaginationMeta } from '../../shared/utils/pagination.util';
 import { ShowtimeRepository } from './showtime.repository';
@@ -22,6 +25,8 @@ export class ShowtimeService {
     private readonly showtimeRepository: ShowtimeRepository,
     private readonly movieService: MovieService,
     private readonly cinemaService: CinemaService,
+    @Inject(forwardRef(() => BookingService))
+    private readonly bookingService: BookingService,
   ) {}
 
   async list(
@@ -123,6 +128,13 @@ export class ShowtimeService {
   async getSeats(showtimeId: string): Promise<ShowtimeSeatDto[]> {
     const showtime = await this.getByIdOrThrow(showtimeId);
     const seats = await this.cinemaService.listSeats(showtime.roomId);
+    const seatIds = seats.map((seat) => seat.id);
+
+    const [takenSeatIds, lockedSeatIds] = await Promise.all([
+      this.bookingService.getTakenSeatIds(showtimeId),
+      this.bookingService.getLockedSeatIds(showtimeId, seatIds),
+    ]);
+    const taken = new Set(takenSeatIds);
 
     return seats.map((seat) => ({
       id: seat.id,
@@ -130,7 +142,11 @@ export class ShowtimeService {
       seatNumber: seat.seatNumber,
       seatType: seat.seatType,
       price: Number(showtime.basePrice),
-      status: 'available',
+      status: taken.has(seat.id)
+        ? 'booked'
+        : lockedSeatIds.has(seat.id)
+          ? 'locked'
+          : 'available',
     }));
   }
 
