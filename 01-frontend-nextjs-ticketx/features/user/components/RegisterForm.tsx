@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { ApiError } from '@/shared/types/api-response.type';
 import { ROUTES } from '@/shared/utils/routes';
 import { useRegister } from '../hooks/useRegister';
+import { GoogleLoginButton } from './GoogleLoginButton';
 
 const registerSchema = z.object({
   fullName: z.string().min(1, 'Vui lòng nhập họ tên').max(255),
@@ -40,17 +41,23 @@ export function RegisterForm() {
         ? 'Đã có lỗi xảy ra, vui lòng thử lại'
         : null;
 
+  const inputClass = (hasError?: boolean) =>
+    `rounded-lg border bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20 ${
+      hasError ? 'border-red-400' : 'border-zinc-200'
+    }`;
+
   return (
     <form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="fullName" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="fullName" className="text-sm font-medium text-zinc-700">
           Họ tên
         </label>
         <input
           id="fullName"
           autoComplete="name"
+          aria-invalid={!!errors.fullName}
           {...registerField('fullName')}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+          className={inputClass(!!errors.fullName)}
         />
         {errors.fullName && (
           <p className="text-sm text-red-600">{errors.fullName.message}</p>
@@ -58,15 +65,16 @@ export function RegisterForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="email" className="text-sm font-medium text-zinc-700">
           Email
         </label>
         <input
           id="email"
           type="email"
           autoComplete="email"
+          aria-invalid={!!errors.email}
           {...registerField('email')}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+          className={inputClass(!!errors.email)}
         />
         {errors.email && (
           <p className="text-sm text-red-600">{errors.email.message}</p>
@@ -74,14 +82,15 @@ export function RegisterForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="phone" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="phone" className="text-sm font-medium text-zinc-700">
           Số điện thoại (tuỳ chọn)
         </label>
         <input
           id="phone"
           autoComplete="tel"
+          aria-invalid={!!errors.phone}
           {...registerField('phone')}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+          className={inputClass(!!errors.phone)}
         />
         {errors.phone && (
           <p className="text-sm text-red-600">{errors.phone.message}</p>
@@ -89,15 +98,16 @@ export function RegisterForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="password" className="text-sm font-medium text-zinc-700">
           Mật khẩu
         </label>
         <input
           id="password"
           type="password"
           autoComplete="new-password"
+          aria-invalid={!!errors.password}
           {...registerField('password')}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+          className={inputClass(!!errors.password)}
         />
         {errors.password && (
           <p className="text-sm text-red-600">{errors.password.message}</p>
@@ -109,10 +119,18 @@ export function RegisterForm() {
       <button
         type="submit"
         disabled={registerMutation.isPending}
-        className="mt-2 rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className="mt-2 cursor-pointer rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {registerMutation.isPending ? 'Đang tạo tài khoản…' : 'Đăng ký'}
       </button>
+
+      <div className="flex items-center gap-3 text-xs text-zinc-400">
+        <div className="h-px flex-1 bg-zinc-200" />
+        hoặc
+        <div className="h-px flex-1 bg-zinc-200" />
+      </div>
+
+      <GoogleLoginButton onSuccess={() => router.push(ROUTES.movies)} />
     </form>
   );
 }

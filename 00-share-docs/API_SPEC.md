@@ -87,6 +87,9 @@ Format: `[FEATURE]_[NUMBER]`, e.g. `BOOKING_002`, `PAYMENT_001`. Each feature do
 | `AUTH_002` | 401 | Access token expired |
 | `AUTH_003` | 401 | Access token missing or malformed |
 | `AUTH_004` | 403 | Role not permitted for this action |
+| `AUTH_005` | 401 | Invalid or unverifiable Google credential |
+| `AUTH_006` | 400 | OTP invalid or expired |
+| `AUTH_007` | 429 | Too many OTP requests, retry after cooldown |
 | `SYSTEM_001` | 500 | Unexpected server error |
 
 **Feature-notable codes** (used in §7 examples)
@@ -108,8 +111,11 @@ Format: `[FEATURE]_[NUMBER]`, e.g. `BOOKING_002`, `PAYMENT_001`. Each feature do
 |---|---|---|---|
 | POST | `/auth/register` | Register a new customer account | Public |
 | POST | `/auth/login` | Login, returns access + refresh tokens | Public |
+| POST | `/auth/google` | Login/register via Google ID token, returns access + refresh tokens | Public |
 | POST | `/auth/refresh` | Exchange refresh token for a new pair | Public (refresh token) |
 | POST | `/auth/logout` | Revoke the current refresh token | Bearer |
+| POST | `/auth/forgot-password` | Request a 6-digit OTP emailed to the account, to reset a forgotten password | Public |
+| POST | `/auth/reset-password` | Reset password using the emailed OTP | Public |
 | GET | `/users/me` | Get current user profile | Bearer |
 | PATCH | `/users/me` | Update profile | Bearer |
 | PATCH | `/users/me/password` | Change password | Bearer |
@@ -267,6 +273,29 @@ Errors: `BOOKING_003` (booking expired, 409) · `PAYMENT_001` (gateway error, 50
 - Public, but request is rejected unless the provider's signature header/query hash validates (`PAYMENT_002` on mismatch).
 - **Response body does not follow the standard envelope** — each gateway expects its own ack format (e.g. VNPay expects `{ "RspCode": "00", "Message": "Confirm Success" }`). This is the one endpoint intentionally exempt from §4.
 - On success: marks `payments.status = success`, `bookings.status = confirmed`, deletes the seat lock keys, emits a `booking.confirmed` domain event (see `ARCHITECTURE.md` §5).
+
+### `POST /auth/forgot-password` → `POST /auth/reset-password`
+OTP is stored hashed in Redis (`otp:{email}`, TTL 5 min), never in Postgres — same ephemeral-primitive approach as the seat lock. Response is intentionally identical whether or not the email is registered, to avoid leaking which emails have accounts.
+
+```json
+// POST /auth/forgot-password
+{ "email": "user@example.com" }
+```
+Response `200` (always, regardless of whether the email exists):
+```json
+{ "success": true, "data": { "message": "If an account exists for this email, an OTP has been sent." } }
+```
+Errors: `AUTH_007` (cooldown active — one request per 60s per email, 429) · `VALIDATION_001` (400)
+
+```json
+// POST /auth/reset-password
+{ "email": "user@example.com", "otp": "482913", "newPassword": "newSecurePass123" }
+```
+Response `200`:
+```json
+{ "success": true, "data": { "message": "Password reset successful" } }
+```
+Errors: `AUTH_006` (OTP invalid, expired, or max attempts exceeded, 400) · `VALIDATION_001` (400)
 
 ---
 

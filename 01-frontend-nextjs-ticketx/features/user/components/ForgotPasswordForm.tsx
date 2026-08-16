@@ -1,41 +1,40 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { ApiError } from '@/shared/types/api-response.type';
 import { ROUTES } from '@/shared/utils/routes';
-import { useLogin } from '../hooks/useLogin';
-import { GoogleLoginButton } from './GoogleLoginButton';
+import { useForgotPassword } from '../hooks/useForgotPassword';
 
-const loginSchema = z.object({
+const forgotPasswordSchema = z.object({
   email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(1, 'Vui lòng nhập mật khẩu'),
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
-export function LoginForm() {
+export function ForgotPasswordForm() {
   const router = useRouter();
-  const loginMutation = useLogin();
+  const forgotPasswordMutation = useForgotPassword();
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
+  } = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
 
   const onSubmit = handleSubmit((values) => {
-    loginMutation.mutate(values, {
-      onSuccess: () => router.push(ROUTES.movies),
+    forgotPasswordMutation.mutate(values, {
+      onSuccess: () => router.push(ROUTES.resetPassword(values.email)),
     });
   });
 
   const errorMessage =
-    loginMutation.error instanceof ApiError
-      ? loginMutation.error.message
-      : loginMutation.error
+    forgotPasswordMutation.error instanceof ApiError
+      ? forgotPasswordMutation.error.message
+      : forgotPasswordMutation.error
         ? 'Đã có lỗi xảy ra, vui lòng thử lại'
         : null;
 
@@ -46,6 +45,10 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-4">
+      <p className="text-sm text-zinc-600">
+        Nhập email đã đăng ký, chúng tôi sẽ gửi mã OTP để đặt lại mật khẩu.
+      </p>
+
       <div className="flex flex-col gap-1.5">
         <label htmlFor="email" className="text-sm font-medium text-zinc-700">
           Email
@@ -63,48 +66,15 @@ export function LoginForm() {
         )}
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <label htmlFor="password" className="text-sm font-medium text-zinc-700">
-            Mật khẩu
-          </label>
-          <Link
-            href={ROUTES.forgotPassword}
-            className="text-xs font-medium text-accent hover:underline"
-          >
-            Quên mật khẩu?
-          </Link>
-        </div>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          aria-invalid={!!errors.password}
-          {...register('password')}
-          className={inputClass(!!errors.password)}
-        />
-        {errors.password && (
-          <p className="text-sm text-red-600">{errors.password.message}</p>
-        )}
-      </div>
-
       {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
 
       <button
         type="submit"
-        disabled={loginMutation.isPending}
+        disabled={forgotPasswordMutation.isPending}
         className="mt-2 cursor-pointer rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
       >
-        {loginMutation.isPending ? 'Đang đăng nhập…' : 'Đăng nhập'}
+        {forgotPasswordMutation.isPending ? 'Đang gửi mã…' : 'Gửi mã OTP'}
       </button>
-
-      <div className="flex items-center gap-3 text-xs text-zinc-400">
-        <div className="h-px flex-1 bg-zinc-200" />
-        hoặc
-        <div className="h-px flex-1 bg-zinc-200" />
-      </div>
-
-      <GoogleLoginButton onSuccess={() => router.push(ROUTES.movies)} />
     </form>
   );
 }

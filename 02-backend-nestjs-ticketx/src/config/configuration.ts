@@ -23,11 +23,27 @@ export interface AppConfig {
     refreshSecret: string;
     refreshExpiresIn: string;
   };
+  googleAuth: {
+    clientId: string;
+  };
   booking: {
     seatLockTtlSeconds: number;
   };
   payment: {
     webhookSecret: string;
+  };
+  mail: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+    from: string;
+  };
+  otp: {
+    ttlSeconds: number;
+    cooldownSeconds: number;
+    maxAttempts: number;
   };
 }
 
@@ -58,6 +74,9 @@ export default (): AppConfig => ({
     refreshSecret: process.env.JWT_REFRESH_SECRET ?? 'dev_refresh_secret',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
   },
+  googleAuth: {
+    clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+  },
   booking: {
     seatLockTtlSeconds: parseInt(
       process.env.SEAT_LOCK_TTL_SECONDS ?? '600',
@@ -66,5 +85,18 @@ export default (): AppConfig => ({
   },
   payment: {
     webhookSecret: process.env.PAYMENT_WEBHOOK_SECRET ?? 'dev_webhook_secret',
+  },
+  mail: {
+    host: process.env.MAIL_HOST ?? 'smtp.gmail.com',
+    port: parseInt(process.env.MAIL_PORT ?? '587', 10),
+    secure: process.env.MAIL_SECURE === 'true',
+    user: process.env.MAIL_USER ?? '',
+    pass: process.env.MAIL_PASS ?? '',
+    from: process.env.MAIL_FROM ?? 'TicketX <no-reply@ticketx.dev>',
+  },
+  otp: {
+    ttlSeconds: parseInt(process.env.OTP_TTL_SECONDS ?? '300', 10),
+    cooldownSeconds: parseInt(process.env.OTP_COOLDOWN_SECONDS ?? '60', 10),
+    maxAttempts: parseInt(process.env.OTP_MAX_ATTEMPTS ?? '5', 10),
   },
 });

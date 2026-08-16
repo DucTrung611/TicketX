@@ -3,6 +3,9 @@ export const ROUTES = {
   movies: '/movies',
   login: '/login',
   register: '/register',
+  forgotPassword: '/forgot-password',
+  resetPassword: (email?: string) =>
+    email ? `/reset-password?email=${encodeURIComponent(email)}` : '/reset-password',
   myBookings: '/my-bookings',
   cinemas: '/cinemas',
   showtimes: '/showtimes',

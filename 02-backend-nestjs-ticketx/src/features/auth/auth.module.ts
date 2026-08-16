@@ -7,6 +7,7 @@ import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RefreshTokenService } from './refresh-token.service';
+import { OtpService } from './otp.service';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { RefreshTokenService } from './refresh-token.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, RefreshTokenService],
+  providers: [AuthService, RefreshTokenService, OtpService],
   exports: [AuthService],
 })
 export class AuthModule {}

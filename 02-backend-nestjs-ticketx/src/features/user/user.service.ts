@@ -20,6 +20,12 @@ export interface CreateCustomerInput {
   phone?: string;
 }
 
+export interface FindOrCreateGoogleUserInput {
+  email: string;
+  fullName: string;
+  avatarUrl: string | null;
+}
+
 @Injectable()
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
@@ -60,6 +66,34 @@ export class UserService {
     });
   }
 
+  /**
+   * Google verifies the email belongs to the caller, so a match against an
+   * existing (password-based) account is treated as the same person logging
+   * in via a second method — not a conflict. New accounts get no
+   * `passwordHash` (Google-only, per `DATABASE.md` §2 "nullable for
+   * OAuth-only users").
+   */
+  async findOrCreateGoogleUser(
+    input: FindOrCreateGoogleUserInput,
+  ): Promise<User> {
+    const existing = await this.userRepository.findByEmail(input.email);
+    if (existing) {
+      if (!existing.avatarUrl && input.avatarUrl) {
+        return this.userRepository.update(existing.id, {
+          avatarUrl: input.avatarUrl,
+        });
+      }
+      return existing;
+    }
+
+    return this.userRepository.create({
+      email: input.email,
+      passwordHash: null,
+      fullName: input.fullName,
+      avatarUrl: input.avatarUrl,
+    });
+  }
+
   async verifyPassword(user: User, plainPassword: string): Promise<boolean> {
     if (!user.passwordHash) return false;
     return bcrypt.compare(plainPassword, user.passwordHash);
@@ -68,6 +102,11 @@ export class UserService {
   async updateProfile(id: string, dto: UpdateUserDto): Promise<User> {
     await this.findByIdOrThrow(id);
     return this.userRepository.update(id, dto);
+  }
+
+  async resetPassword(id: string, newPassword: string): Promise<void> {
+    const passwordHash = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
+    await this.userRepository.update(id, { passwordHash });
   }
 
   async changePassword(id: string, dto: ChangePasswordDto): Promise<void> {

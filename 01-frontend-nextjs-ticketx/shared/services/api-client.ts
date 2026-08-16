@@ -69,13 +69,22 @@ apiClient.interceptors.response.use(
     const original = error.config as RetriableConfig | undefined;
     const body = error.response?.data;
 
-    const isExpiredAccessToken =
+    // AUTH_002 (expired access token) is always retriable via refresh.
+    // AUTH_003 (missing/malformed access token) is also retried when a refresh
+    // token is available: on a hard reload, accessToken starts out null (it is
+    // never persisted — see auth.store.ts) while useAuthBootstrap silently
+    // refreshes it, so a query that fires before that resolves goes out with
+    // no Authorization header and would otherwise fail immediately instead of
+    // waiting for the in-flight bootstrap refresh.
+    const isRecoverableAuthError =
       error.response?.status === 401 &&
       body &&
       !body.success &&
-      body.error.code === 'AUTH_002';
+      (body.error.code === 'AUTH_002' ||
+        (body.error.code === 'AUTH_003' &&
+          Boolean(useAuthStore.getState().refreshToken)));
 
-    if (isExpiredAccessToken && original && !original._retry) {
+    if (isRecoverableAuthError && original && !original._retry) {
       original._retry = true;
       try {
         const newAccessToken = await refreshAccessToken();

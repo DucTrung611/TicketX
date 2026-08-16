@@ -26,4 +26,17 @@ export const validationSchema = Joi.object({
   SEAT_LOCK_TTL_SECONDS: Joi.number().default(600),
 
   PAYMENT_WEBHOOK_SECRET: Joi.string().default('dev_webhook_secret'),
+
+  GOOGLE_CLIENT_ID: Joi.string().allow('').optional(),
+
+  MAIL_HOST: Joi.string().default('smtp.gmail.com'),
+  MAIL_PORT: Joi.number().default(587),
+  MAIL_SECURE: Joi.string().valid('true', 'false').default('false'),
+  MAIL_USER: Joi.string().allow('').optional(),
+  MAIL_PASS: Joi.string().allow('').optional(),
+  MAIL_FROM: Joi.string().default('TicketX <no-reply@ticketx.dev>'),
+
+  OTP_TTL_SECONDS: Joi.number().default(300),
+  OTP_COOLDOWN_SECONDS: Joi.number().default(60),
+  OTP_MAX_ATTEMPTS: Joi.number().default(5),
 });

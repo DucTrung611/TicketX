@@ -11,6 +11,7 @@ import { validationSchema } from './config/validation.schema';
 import { DatabaseModule } from './core/database/database.module';
 import { RedisModule } from './core/cache/redis.module';
 import { LoggerModule } from './core/logger/logger.module';
+import { MailModule } from './core/mail/mail.module';
 import { SharedModule } from './shared/shared.module';
 import { UserModule } from './features/user/user.module';
 import { AuthModule } from './features/auth/auth.module';
@@ -38,6 +39,7 @@ import { VoucherModule } from './features/voucher/voucher.module';
     LoggerModule,
     DatabaseModule,
     RedisModule,
+    MailModule,
     SharedModule,
     UserModule,
     AuthModule,
