@@ -1,5 +1,6 @@
 export { MovieCard } from './components/MovieCard';
 export { MovieGrid } from './components/MovieGrid';
+export { MovieCatalog } from './components/MovieCatalog';
 export { ReviewList } from './components/ReviewList';
 export { ReviewForm } from './components/ReviewForm';
 export { useMovies } from './hooks/useMovies';
