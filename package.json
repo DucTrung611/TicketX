@@ -1,0 +1,12 @@
+{
+  "name": "ticketx",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n frontend,backend -c blue,green \"npm run dev --prefix 01-frontend-nextjs-ticketx\" \"npm run dev --prefix 02-backend-nestjs-ticketx\"",
+    "install:all": "npm install --prefix 01-frontend-nextjs-ticketx && npm install --prefix 02-backend-nestjs-ticketx"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
