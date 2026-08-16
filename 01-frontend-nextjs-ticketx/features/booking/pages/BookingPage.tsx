@@ -36,15 +36,17 @@ export function BookingPage({ showtimeId }: BookingPageProps) {
 
   if (isShowtimeLoading) {
     return (
-      <p className="px-6 py-8 text-sm text-zinc-500">Đang tải suất chiếu…</p>
+      <div className="flex flex-1 flex-col bg-[#0F0F23] px-6 py-8">
+        <p className="text-sm text-zinc-500">Đang tải suất chiếu…</p>
+      </div>
     );
   }
 
   if (!showtime) {
     return (
-      <p className="px-6 py-8 text-sm text-red-400">
-        Không tìm thấy suất chiếu.
-      </p>
+      <div className="flex flex-1 flex-col bg-[#0F0F23] px-6 py-8">
+        <p className="text-sm text-red-400">Không tìm thấy suất chiếu.</p>
+      </div>
     );
   }
 
@@ -52,9 +54,9 @@ export function BookingPage({ showtimeId }: BookingPageProps) {
   const startTime = new Date(showtime.startTime);
 
   return (
-    <div className="flex flex-1 flex-col gap-6 px-6 py-8">
+    <div className="flex flex-1 flex-col gap-6 bg-[#0F0F23] px-6 py-8">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-50">
+        <h1 className="font-[family-name:var(--font-heading)] text-xl font-bold text-zinc-50">
           {movie?.title ?? 'Đang tải…'}
         </h1>
         <p className="text-sm text-zinc-400">
@@ -73,7 +75,7 @@ export function BookingPage({ showtimeId }: BookingPageProps) {
       </div>
 
       <div className="flex flex-col gap-6 md:flex-row md:items-start">
-        <div className="flex-1 rounded-lg border border-zinc-800 bg-black p-6">
+        <div className="flex-1 rounded-xl border border-zinc-800 bg-black p-6">
           {isSeatsLoading ? (
             <p className="text-center text-sm text-zinc-500">Đang tải sơ đồ ghế…</p>
           ) : (

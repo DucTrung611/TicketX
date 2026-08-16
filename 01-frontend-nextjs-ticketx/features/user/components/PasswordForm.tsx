@@ -36,24 +36,33 @@ export function PasswordForm() {
         : null;
 
   return (
-    <form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-4">
-      <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-        Đổi mật khẩu
-      </h2>
+    <form
+      onSubmit={onSubmit}
+      className="flex w-full max-w-sm flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
+    >
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="5" y="11" width="14" height="9" rx="2" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" strokeLinecap="round" />
+          </svg>
+        </span>
+        <h2 className="font-[family-name:var(--font-heading)] text-base font-bold text-zinc-900">
+          Đổi mật khẩu
+        </h2>
+      </div>
 
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="currentPassword"
-          className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
+        <label htmlFor="currentPassword" className="text-sm font-medium text-zinc-700">
           Mật khẩu hiện tại
         </label>
         <input
           id="currentPassword"
           type="password"
           autoComplete="current-password"
+          aria-invalid={!!errors.currentPassword}
           {...register('currentPassword')}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+          className={`rounded-lg border bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20 ${errors.currentPassword ? 'border-red-400' : 'border-zinc-200'}`}
         />
         {errors.currentPassword && (
           <p className="text-sm text-red-600">{errors.currentPassword.message}</p>
@@ -61,27 +70,27 @@ export function PasswordForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="newPassword"
-          className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-        >
+        <label htmlFor="newPassword" className="text-sm font-medium text-zinc-700">
           Mật khẩu mới
         </label>
         <input
           id="newPassword"
           type="password"
           autoComplete="new-password"
+          aria-invalid={!!errors.newPassword}
           {...register('newPassword')}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+          className={`rounded-lg border bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20 ${errors.newPassword ? 'border-red-400' : 'border-zinc-200'}`}
         />
         {errors.newPassword && (
           <p className="text-sm text-red-600">{errors.newPassword.message}</p>
         )}
       </div>
 
-      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{errorMessage}</p>
+      )}
       {changePasswordMutation.isSuccess && (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400">
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           Đổi mật khẩu thành công.
         </p>
       )}
@@ -89,7 +98,7 @@ export function PasswordForm() {
       <button
         type="submit"
         disabled={changePasswordMutation.isPending}
-        className="mt-2 self-start rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className="mt-2 cursor-pointer self-start rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {changePasswordMutation.isPending ? 'Đang lưu…' : 'Đổi mật khẩu'}
       </button>

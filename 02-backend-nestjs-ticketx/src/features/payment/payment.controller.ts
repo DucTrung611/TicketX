@@ -102,36 +102,55 @@ function renderMockCheckoutPage(params: {
 <meta charset="utf-8" />
 <title>TicketX Mock ${provider} Checkout</title>
 <style>
-  body { font-family: system-ui, sans-serif; background: #0b0b0f; color: #f4f4f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-  .card { background: #18181b; border: 1px solid #27272a; border-radius: 12px; padding: 32px; width: 360px; }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  p.sub { color: #a1a1aa; margin: 0 0 24px; font-size: 13px; }
-  .amount { font-size: 28px; font-weight: 600; margin-bottom: 24px; }
-  button { width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-bottom: 10px; }
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background: radial-gradient(circle at 50% 0%, #1a1a2e, #0b0b0f 60%); color: #f4f4f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+  .card { background: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 32px; width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #a1a1aa; background: #27272a; padding: 4px 10px; border-radius: 999px; margin-bottom: 14px; }
+  h1 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  p.sub { color: #71717a; margin: 0 0 20px; font-size: 12px; font-family: ui-monospace, monospace; }
+  .amount-label { font-size: 11px; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .amount { font-size: 32px; font-weight: 700; margin-bottom: 28px; letter-spacing: -0.02em; }
+  button { width: 100%; padding: 13px; border-radius: 999px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 10px; transition: transform 150ms ease, opacity 150ms ease; }
+  button:hover:not(:disabled) { transform: translateY(-1px); }
+  button:disabled { cursor: not-allowed; opacity: 0.6; transform: none; }
   .pay { background: #22c55e; color: #052e12; }
-  .fail { background: #27272a; color: #f4f4f5; }
-  #result { margin-top: 16px; font-size: 13px; white-space: pre-wrap; }
+  .fail { background: transparent; color: #a1a1aa; border: 1px solid #3f3f46; }
+  #result { margin-top: 16px; font-size: 12px; white-space: pre-wrap; font-family: ui-monospace, monospace; color: #71717a; }
 </style>
 </head>
 <body>
   <div class="card">
+    <span class="badge">Mock gateway · ${status}</span>
     <h1>TicketX — Mock ${provider.toUpperCase()} Checkout</h1>
-    <p class="sub">Payment ${paymentId} · status: ${status}</p>
+    <p class="sub">Payment ${paymentId}</p>
+    <div class="amount-label">Số tiền</div>
     <div class="amount">${amount.toLocaleString('vi-VN')} VND</div>
-    <button class="pay" onclick="pay('success')">Pay now</button>
-    <button class="fail" onclick="pay('failed')">Simulate failure</button>
+    <button class="pay" id="pay-btn" onclick="pay('success')">Pay now</button>
+    <button class="fail" id="fail-btn" onclick="pay('failed')">Simulate failure</button>
     <div id="result"></div>
   </div>
   <script>
     async function pay(resultCode) {
+      const payBtn = document.getElementById('pay-btn');
+      const failBtn = document.getElementById('fail-btn');
+      payBtn.disabled = true;
+      failBtn.disabled = true;
+      const originalLabel = payBtn.textContent;
+      if (resultCode === 'success') payBtn.textContent = 'Processing…';
       const signature = resultCode === 'success' ? ${JSON.stringify(successSignature)} : ${JSON.stringify(failedSignature)};
-      const res = await fetch('/api/v1/payments/webhook/${provider}', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId: ${JSON.stringify(paymentId)}, resultCode, signature }),
-      });
-      const body = await res.json();
-      document.getElementById('result').textContent = JSON.stringify(body, null, 2);
+      try {
+        const res = await fetch('/api/v1/payments/webhook/${provider}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId: ${JSON.stringify(paymentId)}, resultCode, signature }),
+        });
+        const body = await res.json();
+        document.getElementById('result').textContent = JSON.stringify(body, null, 2);
+      } finally {
+        payBtn.disabled = false;
+        failBtn.disabled = false;
+        payBtn.textContent = originalLabel;
+      }
     }
   </script>
 </body>

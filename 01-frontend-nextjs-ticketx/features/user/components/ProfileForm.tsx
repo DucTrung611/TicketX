@@ -47,20 +47,32 @@ export function ProfileForm({ user }: ProfileFormProps) {
         : null;
 
   return (
-    <form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-4">
-      <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-        Thông tin cá nhân
-      </h2>
+    <form
+      onSubmit={onSubmit}
+      className="flex w-full max-w-sm flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
+    >
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" strokeLinecap="round" />
+          </svg>
+        </span>
+        <h2 className="font-[family-name:var(--font-heading)] text-base font-bold text-zinc-900">
+          Thông tin cá nhân
+        </h2>
+      </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="fullName" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="fullName" className="text-sm font-medium text-zinc-700">
           Họ tên
         </label>
         <input
           id="fullName"
           autoComplete="name"
+          aria-invalid={!!errors.fullName}
           {...register('fullName')}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+          className={`rounded-lg border bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20 ${errors.fullName ? 'border-red-400' : 'border-zinc-200'}`}
         />
         {errors.fullName && (
           <p className="text-sm text-red-600">{errors.fullName.message}</p>
@@ -68,23 +80,26 @@ export function ProfileForm({ user }: ProfileFormProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="phone" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="phone" className="text-sm font-medium text-zinc-700">
           Số điện thoại
         </label>
         <input
           id="phone"
           autoComplete="tel"
+          aria-invalid={!!errors.phone}
           {...register('phone')}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+          className={`rounded-lg border bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20 ${errors.phone ? 'border-red-400' : 'border-zinc-200'}`}
         />
         {errors.phone && (
           <p className="text-sm text-red-600">{errors.phone.message}</p>
         )}
       </div>
 
-      {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{errorMessage}</p>
+      )}
       {updateProfileMutation.isSuccess && (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400">
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           Cập nhật thành công.
         </p>
       )}
@@ -92,7 +107,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
       <button
         type="submit"
         disabled={updateProfileMutation.isPending}
-        className="mt-2 self-start rounded-full bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className="mt-2 cursor-pointer self-start rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {updateProfileMutation.isPending ? 'Đang lưu…' : 'Lưu thay đổi'}
       </button>

@@ -13,12 +13,32 @@ import {
   listShowtimes,
   updateShowtime,
 } from '@/features/showtime';
-import type { CreateShowtimePayload, Showtime } from '@/features/showtime';
+import type { CreateShowtimePayload, Showtime, ShowtimeStatus } from '@/features/showtime';
+import { StatusBadge, type StatusBadgeVariant } from '@/shared/components/StatusBadge';
 import { ApiError } from '@/shared/types/api-response.type';
+import {
+  adminPageTitleClass,
+  btnDestructive,
+  btnNeutral,
+  btnOutline,
+  btnPrimary,
+  inputClass,
+  labelClass,
+} from '@/shared/utils/admin-styles';
 
-const inputClass =
-  'rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300';
-const labelClass = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
+const STATUS_VARIANT: Record<ShowtimeStatus, StatusBadgeVariant> = {
+  scheduled: 'accent',
+  ongoing: 'success',
+  ended: 'neutral',
+  cancelled: 'destructive',
+};
+
+const STATUS_LABEL: Record<ShowtimeStatus, string> = {
+  scheduled: 'Đã lên lịch',
+  ongoing: 'Đang chiếu',
+  ended: 'Đã kết thúc',
+  cancelled: 'Đã huỷ',
+};
 
 const showtimeSchema = z.object({
   movieId: z.string().uuid('Vui lòng chọn phim'),
@@ -87,16 +107,37 @@ function ShowtimeFormFields({
         </select>
         {errors.roomId && <p className="text-sm text-red-600">{errors.roomId.message}</p>}
       </div>
-      <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Bắt đầu</label>
-        <input type="datetime-local" className={inputClass} {...register('startTime')} />
-        {errors.startTime && <p className="text-sm text-red-600">{errors.startTime.message}</p>}
+
+      <div className="flex flex-col gap-1.5 sm:col-span-2">
+        <label className={labelClass}>Thời gian chiếu</label>
+        <div className="flex flex-col items-center gap-2 sm:flex-row">
+          <div className="flex w-full flex-col gap-1">
+            <span className="text-xs text-zinc-400">Bắt đầu</span>
+            <input type="datetime-local" className={inputClass} {...register('startTime')} />
+          </div>
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="mt-4 hidden shrink-0 text-zinc-300 sm:block"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m0 0-5-5m5 5-5 5" />
+          </svg>
+          <div className="flex w-full flex-col gap-1">
+            <span className="text-xs text-zinc-400">Kết thúc</span>
+            <input type="datetime-local" className={inputClass} {...register('endTime')} />
+          </div>
+        </div>
+        {(errors.startTime || errors.endTime) && (
+          <p className="text-sm text-red-600">
+            {errors.startTime?.message ?? errors.endTime?.message}
+          </p>
+        )}
       </div>
-      <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Kết thúc</label>
-        <input type="datetime-local" className={inputClass} {...register('endTime')} />
-        {errors.endTime && <p className="text-sm text-red-600">{errors.endTime.message}</p>}
-      </div>
+
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>Giá vé cơ bản</label>
         <input type="number" className={inputClass} {...register('basePrice')} />
@@ -146,16 +187,12 @@ function CreateShowtimeForm({
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+      className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
     >
-      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Thêm suất chiếu</h2>
+      <h2 className={adminPageTitleClass}>Thêm suất chiếu</h2>
       <ShowtimeFormFields register={register} errors={errors} movies={movies} rooms={rooms} />
       {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
-      <button
-        type="submit"
-        disabled={createMutation.isPending}
-        className="self-start rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-      >
+      <button type="submit" disabled={createMutation.isPending} className={`self-start ${btnPrimary}`}>
         {createMutation.isPending ? 'Đang tạo…' : 'Tạo suất chiếu'}
       </button>
     </form>
@@ -205,23 +242,15 @@ function EditShowtimeForm({
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-3 rounded-lg border border-zinc-300 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900"
+      className="flex flex-col gap-4 rounded-xl border border-accent/30 bg-accent/5 p-5"
     >
       <ShowtimeFormFields register={register} errors={errors} movies={movies} rooms={rooms} />
       {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
       <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={updateMutation.isPending}
-          className="rounded-full bg-zinc-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
+        <button type="submit" disabled={updateMutation.isPending} className={btnPrimary}>
           {updateMutation.isPending ? 'Đang lưu…' : 'Lưu'}
         </button>
-        <button
-          type="button"
-          onClick={onDone}
-          className="rounded-full border border-zinc-300 px-4 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-        >
+        <button type="button" onClick={onDone} className={btnOutline}>
           Huỷ
         </button>
       </div>
@@ -264,23 +293,24 @@ function ShowtimeRow({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
-      <div>
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+    <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm font-semibold text-zinc-900">
           {movieTitle} · {roomLabel}
         </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {new Date(showtime.startTime).toLocaleString('vi-VN')} –{' '}
-          {new Date(showtime.endTime).toLocaleString('vi-VN')} ·{' '}
-          {showtime.basePrice.toLocaleString('vi-VN')} VND · {showtime.status}
-        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <StatusBadge variant={STATUS_VARIANT[showtime.status]}>
+            {STATUS_LABEL[showtime.status]}
+          </StatusBadge>
+          <span className="text-xs text-zinc-500">
+            {new Date(showtime.startTime).toLocaleString('vi-VN')} –{' '}
+            {new Date(showtime.endTime).toLocaleString('vi-VN')} ·{' '}
+            {showtime.basePrice.toLocaleString('vi-VN')} VND
+          </span>
+        </div>
       </div>
       <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setIsEditing(true)}
-          className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-        >
+        <button type="button" onClick={() => setIsEditing(true)} className={btnNeutral}>
           Sửa
         </button>
         <button
@@ -289,7 +319,7 @@ function ShowtimeRow({
           onClick={() => {
             if (window.confirm('Huỷ suất chiếu này?')) deleteMutation.mutate();
           }}
-          className="rounded-full border border-red-300 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+          className={btnDestructive}
         >
           Xoá
         </button>
@@ -323,7 +353,7 @@ export default function AdminShowtimesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+      <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
         Quản lý suất chiếu
       </h1>
       <CreateShowtimeForm movies={movies} rooms={rooms} />

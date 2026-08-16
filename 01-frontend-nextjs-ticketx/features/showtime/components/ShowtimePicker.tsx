@@ -40,11 +40,7 @@ export function ShowtimePicker({ movieId }: ShowtimePickerProps) {
   const { data: directory } = useCinemaDirectory();
 
   if (isLoading) {
-    return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        Đang tải suất chiếu…
-      </p>
-    );
+    return <p className="text-sm text-zinc-500">Đang tải suất chiếu…</p>;
   }
 
   const upcoming = (showtimes ?? []).filter(
@@ -53,9 +49,7 @@ export function ShowtimePicker({ movieId }: ShowtimePickerProps) {
 
   if (upcoming.length === 0) {
     return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        Chưa có suất chiếu nào cho phim này.
-      </p>
+      <p className="text-sm text-zinc-500">Chưa có suất chiếu nào cho phim này.</p>
     );
   }
 
@@ -65,9 +59,7 @@ export function ShowtimePicker({ movieId }: ShowtimePickerProps) {
     <div className="flex flex-col gap-6">
       {[...groups.entries()].map(([date, dateShowtimes]) => (
         <div key={date} className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-            {date}
-          </h3>
+          <h3 className="text-sm font-semibold text-zinc-700">{date}</h3>
           <div className="flex flex-wrap gap-3">
             {dateShowtimes.map((showtime) => {
               const entry = directory?.get(showtime.roomId);
@@ -75,12 +67,12 @@ export function ShowtimePicker({ movieId }: ShowtimePickerProps) {
                 <Link
                   key={showtime.id}
                   href={`/booking/${showtime.id}`}
-                  className="flex flex-col rounded-lg border border-zinc-300 px-4 py-2 text-center transition-colors hover:border-zinc-900 dark:border-zinc-700 dark:hover:border-zinc-100"
+                  className="group flex min-w-[9rem] flex-col gap-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
                 >
-                  <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                  <span className="font-[family-name:var(--font-heading)] text-lg font-bold text-zinc-900 group-hover:text-accent">
                     {formatTime(showtime.startTime)}
                   </span>
-                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <span className="text-xs text-zinc-500">
                     {entry ? `${entry.cinemaName} · ${entry.room.name}` : '—'}
                   </span>
                 </Link>

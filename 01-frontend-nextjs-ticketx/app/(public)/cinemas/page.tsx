@@ -19,15 +19,15 @@ export default function CinemasPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 px-6 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+      <div className="flex max-w-5xl flex-wrap items-center justify-between gap-3">
+        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
           Rạp chiếu
         </h1>
         {cities.length > 0 && (
           <select
             value={city}
             onChange={(event) => setCity(event.target.value)}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+            className="cursor-pointer rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
           >
             <option value="">Tất cả thành phố</option>
             {cities.map((cityOption) => (
@@ -40,7 +40,11 @@ export default function CinemasPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Đang tải…</p>
+        <div className="grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="h-32 animate-pulse rounded-xl border border-zinc-200 bg-zinc-100" />
+          ))}
+        </div>
       ) : (
         <CinemaList cinemas={filtered} />
       )}

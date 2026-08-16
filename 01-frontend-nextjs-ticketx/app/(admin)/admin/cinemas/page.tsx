@@ -15,10 +15,13 @@ import {
 import type { CreateCinemaPayload, CreateRoomPayload } from '@/features/cinema';
 import { ApiError } from '@/shared/types/api-response.type';
 import { ROUTES } from '@/shared/utils/routes';
-
-const inputClass =
-  'rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300';
-const labelClass = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
+import {
+  adminPageTitleClass,
+  btnOutline,
+  btnPrimary,
+  inputClass,
+  labelClass,
+} from '@/shared/utils/admin-styles';
 
 const cinemaSchema = z.object({
   name: z.string().min(1, 'Vui lòng nhập tên rạp').max(255),
@@ -60,9 +63,9 @@ function CreateCinemaForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+      className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm"
     >
-      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Thêm rạp mới</h2>
+      <h2 className={adminPageTitleClass}>Thêm rạp mới</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label className={labelClass}>Tên rạp</label>
@@ -85,11 +88,7 @@ function CreateCinemaForm() {
         </div>
       </div>
       {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
-      <button
-        type="submit"
-        disabled={createMutation.isPending}
-        className="self-start rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-      >
+      <button type="submit" disabled={createMutation.isPending} className={`self-start ${btnPrimary}`}>
         {createMutation.isPending ? 'Đang tạo…' : 'Tạo rạp'}
       </button>
     </form>
@@ -138,21 +137,17 @@ function AddRoomForm({ cinemaId }: { cinemaId: string }) {
     <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
       <div className="flex flex-col gap-1">
         <label className="text-xs text-zinc-500">Tên phòng</label>
-        <input className={`${inputClass} h-8 py-1`} {...register('name')} />
+        <input className={`${inputClass} h-9 py-1`} {...register('name')} />
       </div>
       <div className="flex flex-col gap-1">
         <label className="text-xs text-zinc-500">Loại phòng</label>
-        <select className={`${inputClass} h-8 py-1`} {...register('roomType')}>
+        <select className={`${inputClass} h-9 py-1`} {...register('roomType')}>
           <option value="standard">Standard</option>
           <option value="imax">IMAX</option>
           <option value="4dx">4DX</option>
         </select>
       </div>
-      <button
-        type="submit"
-        disabled={createMutation.isPending}
-        className="h-8 rounded-full border border-zinc-300 px-3 text-xs hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-      >
+      <button type="submit" disabled={createMutation.isPending} className={btnOutline}>
         {createMutation.isPending ? 'Đang thêm…' : 'Thêm phòng'}
       </button>
       {errors.name && <p className="w-full text-xs text-red-600">{errors.name.message}</p>}
@@ -168,21 +163,21 @@ function CinemaRooms({ cinemaId }: { cinemaId: string }) {
   });
 
   return (
-    <div className="flex flex-col gap-2 rounded-md bg-zinc-50 p-3 dark:bg-zinc-900">
+    <div className="flex flex-col gap-2 rounded-lg bg-zinc-50 p-3">
       {isLoading && <p className="text-xs text-zinc-500">Đang tải phòng…</p>}
       {rooms && rooms.length > 0 && (
         <ul className="flex flex-col gap-1">
           {rooms.map((room) => (
             <li
               key={room.id}
-              className="flex items-center justify-between rounded border border-zinc-200 bg-white px-3 py-1.5 text-sm dark:border-zinc-800 dark:bg-zinc-950"
+              className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm"
             >
               <span>
                 {room.name} · {room.roomType} · {room.totalSeats} ghế
               </span>
               <Link
                 href={ROUTES.adminCinemaSeats(cinemaId, room.id)}
-                className="text-xs text-zinc-600 underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                className="text-xs font-medium text-accent hover:underline"
               >
                 Quản lý ghế
               </Link>
@@ -199,19 +194,19 @@ function CinemaRow({ cinema }: { cinema: { id: string; name: string; address: st
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+    <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
         <div>
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{cinema.name}</p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm font-semibold text-zinc-900">{cinema.name}</p>
+          <p className="flex items-center gap-1.5 text-xs text-zinc-500">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="shrink-0 text-accent">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-6.5-7-11.5a7 7 0 1 1 14 0C19 14.5 12 21 12 21Z" />
+              <circle cx="12" cy="9.5" r="2.5" />
+            </svg>
             {cinema.address}, {cinema.city} {cinema.phone ? `· ${cinema.phone}` : ''}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setExpanded((value) => !value)}
-          className="self-start rounded-full border border-zinc-300 px-3 py-1.5 text-xs hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-        >
+        <button type="button" onClick={() => setExpanded((value) => !value)} className={`self-start ${btnOutline}`}>
           {expanded ? 'Ẩn phòng chiếu' : 'Quản lý phòng chiếu'}
         </button>
       </div>
@@ -228,7 +223,9 @@ export default function AdminCinemasPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Quản lý rạp chiếu</h1>
+      <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-zinc-900">
+        Quản lý rạp chiếu
+      </h1>
       <CreateCinemaForm />
       <div className="flex flex-col gap-3">
         {isLoading && <p className="text-sm text-zinc-500">Đang tải…</p>}

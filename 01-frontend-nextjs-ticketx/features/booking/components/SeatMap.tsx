@@ -10,9 +10,9 @@ interface SeatMapProps {
 
 const SEAT_STYLES: Record<string, string> = {
   available:
-    'border-zinc-600 text-zinc-300 hover:border-amber-400 hover:text-amber-300',
-  selected: 'border-amber-400 bg-amber-400 text-zinc-900 font-semibold',
-  locked: 'border-zinc-800 bg-zinc-800/60 text-zinc-600 cursor-not-allowed',
+    'border-emerald-600/60 text-zinc-300 hover:border-accent hover:text-accent hover:-translate-y-0.5',
+  selected: 'border-accent bg-accent text-accent-foreground font-semibold scale-105',
+  locked: 'border-zinc-800 bg-zinc-800/60 text-zinc-600 cursor-not-allowed animate-pulse',
   booked:
     'border-red-900 bg-red-950/40 text-red-800 cursor-not-allowed opacity-70',
 };
@@ -45,9 +45,9 @@ export function SeatMap({ seats }: SeatMapProps) {
         Màn hình
       </p>
 
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-2.5">
         {rows.map(([row, rowSeats]) => (
-          <div key={row} className="flex items-center gap-1.5">
+          <div key={row} className="flex items-center gap-2">
             <span className="w-4 text-xs text-zinc-500">{row}</span>
             {rowSeats.map((seat) => {
               const isSelected = selectedSeatIds.includes(seat.id);
@@ -63,7 +63,7 @@ export function SeatMap({ seats }: SeatMapProps) {
                     isSelected ? 'đang chọn' : seat.status
                   }`}
                   onClick={() => toggleSeat(seat.id)}
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border text-[11px] transition-colors ${SEAT_STYLES[styleKey]}`}
+                  className={`flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-md border text-xs transition-all duration-200 disabled:cursor-not-allowed ${SEAT_STYLES[styleKey]}`}
                 >
                   {seat.seatNumber}
                 </button>
@@ -74,10 +74,10 @@ export function SeatMap({ seats }: SeatMapProps) {
       </div>
 
       <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-zinc-400">
-        <LegendItem swatchClass="border-zinc-600" label="Còn trống" />
-        <LegendItem swatchClass="border-amber-400 bg-amber-400" label="Đang chọn" />
-        <LegendItem swatchClass="border-zinc-800 bg-zinc-800/60" label="Đang giữ" />
-        <LegendItem swatchClass="border-red-900 bg-red-950/40" label="Đã đặt" />
+        <LegendItem swatchClass="bg-emerald-500" label="Còn trống" />
+        <LegendItem swatchClass="bg-accent" label="Đang chọn" />
+        <LegendItem swatchClass="bg-zinc-600" label="Đang giữ" />
+        <LegendItem swatchClass="bg-red-800" label="Đã đặt" />
       </div>
     </div>
   );
@@ -92,7 +92,7 @@ function LegendItem({
 }) {
   return (
     <span className="flex items-center gap-1.5">
-      <span className={`h-3 w-3 rounded border ${swatchClass}`} />
+      <span className={`h-3 w-3 rounded-full ${swatchClass}`} />
       {label}
     </span>
   );

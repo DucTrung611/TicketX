@@ -32,7 +32,9 @@ export function CheckinForm() {
       return;
     }
 
-    checkinMutation.mutate(bookingId);
+    checkinMutation.mutate(bookingId, {
+      onSuccess: () => setInput(''),
+    });
   };
 
   const errorMessage =
@@ -42,12 +44,20 @@ export function CheckinForm() {
         ? 'Đã có lỗi xảy ra, vui lòng thử lại'
         : null;
 
+  const resultState = checkinMutation.isSuccess ? 'success' : errorMessage ? 'error' : null;
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex w-full max-w-sm flex-col gap-4 rounded-lg border border-zinc-700 bg-zinc-900 p-6"
+      className={`flex w-full max-w-md flex-col gap-5 rounded-2xl border p-8 shadow-2xl shadow-black/40 transition-colors ${
+        resultState === 'success'
+          ? 'border-emerald-500/50 bg-emerald-950/20'
+          : resultState === 'error'
+            ? 'border-red-500/50 bg-red-950/20'
+            : 'border-zinc-700 bg-zinc-900'
+      }`}
     >
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <label htmlFor="ticket-input" className="text-sm font-medium text-zinc-300">
           Mã vé (Booking ID hoặc nội dung QR)
         </label>
@@ -57,7 +67,7 @@ export function CheckinForm() {
           onChange={(event) => setInput(event.target.value)}
           placeholder="TICKETX:... hoặc booking id"
           autoFocus
-          className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-zinc-300"
+          className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-4 font-mono text-base text-zinc-100 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
         />
         {formError && <p className="text-sm text-red-400">{formError}</p>}
       </div>
@@ -65,17 +75,27 @@ export function CheckinForm() {
       <button
         type="submit"
         disabled={checkinMutation.isPending || input.trim().length === 0}
-        className="rounded-full bg-amber-400 px-5 py-2.5 text-sm font-semibold text-zinc-900 transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
+        className="cursor-pointer rounded-full bg-accent px-5 py-4 text-base font-bold text-accent-foreground shadow-lg shadow-accent/20 transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
       >
         {checkinMutation.isPending ? 'Đang check-in…' : 'Check-in'}
       </button>
 
       {errorMessage && (
-        <p className="text-center text-sm text-red-400">{errorMessage}</p>
+        <div className="flex items-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m9 9 6 6M15 9l-6 6" strokeLinecap="round" />
+          </svg>
+          {errorMessage}
+        </div>
       )}
 
       {checkinMutation.isSuccess && (
-        <div className="rounded-md bg-emerald-400/15 px-3 py-2 text-center text-sm text-emerald-400">
+        <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-400">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m8 12 3 3 5-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           Check-in thành công: {checkinMutation.data.bookingCode}
         </div>
       )}

@@ -96,9 +96,13 @@ export function BookingSummary({ showtimeId, seats }: BookingSummaryProps) {
     );
   };
 
+  const isUrgent = isHoldActive && remainingMs < 60_000;
+
   return (
-    <aside className="flex w-full max-w-xs flex-col gap-4 rounded-lg border border-zinc-700 bg-zinc-900 p-4">
-      <h3 className="text-sm font-semibold text-zinc-100">Ghế đã chọn</h3>
+    <aside className="sticky top-20 flex w-full max-w-xs flex-col gap-4 rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl shadow-black/40">
+      <h3 className="font-[family-name:var(--font-heading)] text-sm font-bold text-zinc-100">
+        Ghế đã chọn
+      </h3>
 
       {selectedSeats.length === 0 ? (
         <p className="text-sm text-zinc-500">Chưa chọn ghế nào.</p>
@@ -107,7 +111,7 @@ export function BookingSummary({ showtimeId, seats }: BookingSummaryProps) {
           {selectedSeats.map((seat) => (
             <li
               key={seat.id}
-              className="rounded border border-amber-400/50 px-2 py-0.5"
+              className="rounded-full border border-accent/50 bg-accent/10 px-2.5 py-1 font-medium text-accent"
             >
               {seat.seatRow}
               {seat.seatNumber}
@@ -146,7 +150,11 @@ export function BookingSummary({ showtimeId, seats }: BookingSummaryProps) {
       </div>
 
       {isHoldActive && (
-        <p className="text-center text-xs text-amber-400">
+        <p
+          className={`text-center text-xs tabular-nums transition-colors ${
+            isUrgent ? 'font-bold text-red-400' : 'text-accent'
+          }`}
+        >
           Giữ ghế còn {formatCountdown(remainingMs)}
         </p>
       )}
@@ -156,8 +164,9 @@ export function BookingSummary({ showtimeId, seats }: BookingSummaryProps) {
           type="button"
           disabled={selectedSeats.length === 0 || holdMutation.isPending}
           onClick={handleHold}
-          className="rounded-full bg-amber-400 px-4 py-2.5 text-sm font-semibold text-zinc-900 transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex cursor-pointer items-center justify-center gap-2 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
         >
+          {holdMutation.isPending && <Spinner />}
           {holdMutation.isPending ? 'Đang giữ ghế…' : 'Giữ ghế'}
         </button>
       ) : (
@@ -165,9 +174,10 @@ export function BookingSummary({ showtimeId, seats }: BookingSummaryProps) {
           type="button"
           disabled={createMutation.isPending}
           onClick={handleCreateBooking}
-          className="rounded-full bg-amber-400 px-4 py-2.5 text-sm font-semibold text-zinc-900 transition-colors hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex cursor-pointer items-center justify-center gap-2 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
         >
-          {createMutation.isPending ? 'Đang đặt vé…' : 'Đặt vé'}
+          {createMutation.isPending && <Spinner />}
+          {createMutation.isPending ? 'Đang xử lý…' : 'Đặt vé'}
         </button>
       )}
 
@@ -177,5 +187,14 @@ export function BookingSummary({ showtimeId, seats }: BookingSummaryProps) {
         </p>
       )}
     </aside>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4Z" />
+    </svg>
   );
 }

@@ -30,14 +30,16 @@ export function ComboPicker({ selectedCombos, onQuantityChange }: ComboPickerPro
 
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-sm font-semibold text-zinc-100">Combo bắp nước</h3>
+      <h3 className="font-[family-name:var(--font-heading)] text-sm font-bold text-zinc-100">
+        Combo bắp nước
+      </h3>
       <ul className="flex flex-col gap-2">
         {combos.map((combo) => {
           const quantity = quantityFor(combo.id);
           return (
             <li
               key={combo.id}
-              className="flex items-center justify-between gap-3 rounded border border-zinc-800 p-2"
+              className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800 p-2.5"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-zinc-200">{combo.name}</p>
@@ -45,23 +47,23 @@ export function ComboPicker({ selectedCombos, onQuantityChange }: ComboPickerPro
                   {combo.price.toLocaleString('vi-VN')} VND
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 rounded-full bg-zinc-800 p-1">
                 <button
                   type="button"
                   disabled={quantity <= 0}
                   onClick={() => onQuantityChange(combo.id, Math.max(0, quantity - 1))}
-                  className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-700 text-xs text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-base font-medium text-zinc-200 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
                 >
                   −
                 </button>
-                <span className="w-4 text-center text-sm text-zinc-100">{quantity}</span>
+                <span className="w-5 text-center text-sm font-semibold text-zinc-100">{quantity}</span>
                 <button
                   type="button"
                   disabled={quantity >= MAX_QUANTITY}
                   onClick={() =>
                     onQuantityChange(combo.id, Math.min(MAX_QUANTITY, quantity + 1))
                   }
-                  className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-700 text-xs text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-base font-medium text-accent transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent"
                 >
                   +
                 </button>

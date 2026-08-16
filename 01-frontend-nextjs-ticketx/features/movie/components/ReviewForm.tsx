@@ -51,12 +51,10 @@ export function ReviewForm({ movieId }: ReviewFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+      className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"
     >
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Đánh giá của bạn
-        </span>
+        <span className="text-sm font-medium text-zinc-700">Đánh giá của bạn</span>
         <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((value) => (
             <button
@@ -65,17 +63,11 @@ export function ReviewForm({ movieId }: ReviewFormProps) {
               onMouseEnter={() => setHoverRating(value)}
               onMouseLeave={() => setHoverRating(0)}
               onClick={() => setRating(value)}
-              className="text-2xl leading-none transition-colors"
+              className="cursor-pointer text-2xl leading-none transition-transform hover:scale-110"
               aria-label={`${value} sao`}
             >
-              <span
-                className={
-                  value <= (hoverRating || rating)
-                    ? 'text-amber-400'
-                    : 'text-zinc-300 dark:text-zinc-700'
-                }
-              >
-                ★
+              <span className={value <= (hoverRating || rating) ? 'text-accent' : 'text-zinc-300'}>
+                {value <= (hoverRating || rating) ? '★' : '☆'}
               </span>
             </button>
           ))}
@@ -83,7 +75,7 @@ export function ReviewForm({ movieId }: ReviewFormProps) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="comment" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="comment" className="text-sm font-medium text-zinc-700">
           Nhận xét (tuỳ chọn)
         </label>
         <textarea
@@ -91,7 +83,7 @@ export function ReviewForm({ movieId }: ReviewFormProps) {
           rows={3}
           value={comment}
           onChange={(event) => setComment(event.target.value)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-300"
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20"
         />
       </div>
 
@@ -100,7 +92,7 @@ export function ReviewForm({ movieId }: ReviewFormProps) {
       <button
         type="submit"
         disabled={createReviewMutation.isPending}
-        className="self-start rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className="cursor-pointer self-start rounded-full bg-accent px-5 py-2 text-sm font-semibold text-accent-foreground transition-transform hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {createReviewMutation.isPending ? 'Đang gửi…' : 'Gửi đánh giá'}
       </button>
